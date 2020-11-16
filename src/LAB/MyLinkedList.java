@@ -1,8 +1,7 @@
 package LAB;
 //import MyLinkedList.Node;
 
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
+import java.util.Arrays;
 
 public class MyLinkedList<E> implements MyList<E> {
 	protected Node<E> head, tail;
@@ -10,81 +9,129 @@ public class MyLinkedList<E> implements MyList<E> {
 
 	/** Create an empty list */
 	public MyLinkedList() {
+
 	}
 
 	/** Create a list from an array of objects */
 	public MyLinkedList(E[] objects) {
 		// Left as an exercise
+		addAll(Arrays.asList(objects));
 	}
 
 	/** Return the head element in the list */
 	public E getFirst() {
 		// Left as an exercise
-		final MyLinkedList.Node<E> f = head;
-		if (f == null)
-			throw new NoSuchElementException();
-		return f.element;
-
+		return head.element;
 	}
 
 	/** Return the last element in the list */
 	public E getLast() {
 		// Left as an exercise
-		final MyLinkedList.Node<E> l = tail;
-		if (l == null)
-			throw new NoSuchElementException();
-		return l.element;
-
+		return tail.element;
 	}
 
 	/** Add an element to the beginning of the list */
 	public void addFirst(E e) {
 		// Left as an exercise
-		final MyLinkedList.Node<E> f = head;
-		final MyLinkedList.Node<E> newNode = new MyLinkedList.Node<>(e);
+		Node<E> newNode = new Node<>(e);
+		newNode.next = head;
 		head = newNode;
-		if (f == null)
-			tail = newNode;
-//		else
-//			f.prev = newNode;
 		size++;
+		if (tail == null){
+			tail = head;
+		}
 	}
 
 	/** Add an element to the end of the list */
 	public void addLast(E e) {
 		// Left as an exercise
-		final MyLinkedList.Node<E> l = tail;
-		final MyLinkedList.Node<E> newNode = new MyLinkedList.Node<>(e);
-		tail = newNode;
-		if (l == null)
-			head = newNode;
-		else
-			l.next = newNode;
+		if (tail == null){
+			head = tail = new Node<>(e);
+		}
+		else {
+			tail.next = new Node<>(e);
+			tail=tail.next;
+		}
 		size++;
 	}
 
-	@Override /** Add a new element at the specified index 
+	@Override /** Add a new element at the specified index
 	 * in this list. The index of the head element is 0 */
 	public void add(int index, E e) {
 		// Left as an exercise
+		if (index == 0) {
+			addFirst(e);
+		}
+		else if (index>=size) addLast(e);
+		else {
+			Node<E> current = head;
+			for (int i = 1; i < index ; i++){
+				current = current.next;
+			}
+			Node<E> temp = current.next;
+			current.next = new Node<>(e);
+			(current.next).next = temp;
+			size++;
+		}
 	}
 
 	/** Remove the head node and
 	 *  return the object that is contained in the removed node. */
 	public E removeFirst() {
 		// Left as an exercise
+		if (size == 0) return null;
+		else {
+			Node<E> temp = head;
+			head = head.next;
+			size--;
+			if (head == null){
+				tail = null;
+			}
+			return temp.element;
+		}
 	}
 
 	/** Remove the last node and
 	 * return the object that is contained in the removed node. */
 	public E removeLast() {
 		// Left as an exercise
+		if (size ==0) return null;
+		else if (size == 1){
+			Node<E> temp = head;
+			head = tail = null;
+			size = 0;
+			return temp.element;
+		}
+		else {
+			Node<E> current = head;
+			for (int i = 0; i < size - 2; i++){
+				current = current.next;
+			}
+			Node<E> temp = tail;
+			tail = current;
+			tail.next = null;
+			size--;
+			return temp.element;
+		}
 	}
 
-	@Override /** Remove the element at the specified position in this 
+	@Override /** Remove the element at the specified position in this
 	 *  list. Return the element that was removed from the list. */
-	public E remove(int index) {   
+	public E remove(int index) {
 		// Left as an exercise
+		if (index < 0 || index >= size) return null;
+		else if (index == 0) return removeFirst();
+		else if (index == size -1) return removeLast();
+		else {
+			Node<E> previous = head;
+			for (int i = 1; i < index; i++){
+				previous = previous.next;
+			}
+			Node<E> current = previous.next;
+			previous.next = current.next;
+			size--;
+			return current.element;
+		}
 	}
 
 	@Override /** Override toString() to return elements in the list */
@@ -109,39 +156,63 @@ public class MyLinkedList<E> implements MyList<E> {
 	@Override /** Clear the list */
 	public void clear() {
 		// Left as an exercise
+		head = tail = null;
+		size = 0;
 	}
 
 	@Override /** Return true if this list contains the element e */
 	public boolean contains(Object e) {
-		// Left as an exercise 
-
+		// Left as an exercise
+		for (int i = 0; i < size; i++){
+			E x = get(i);
+			if (x.equals(e))
+				return true;
+		}
+		return false;
 	}
 
 	@Override /** Return the element at the specified index */
 	public E get(int index) {
-		// Left as an exercise 
-
+		// Left as an exercise
+		Node<E> x = head;
+		for(int i = 0; i < index; i ++)
+			x = x.next;
+		return x.element;
 	}
 
-	@Override /** Return the index of the first matching element in 
+	@Override /** Return the index of the first matching element in
 	 *  this list. Return -1 if no match. */
 	public int indexOf(Object e) {
 		// Left as an exercise
-
+		Node<E> x = head;
+		for (int i = 0; i < size; i++) {
+			if (x.element.equals(e))
+				return i;
+			x = x.next;
+		}
+		return -1;
 	}
 
-	@Override /** Return the index of the last matching element in 
+	@Override /** Return the index of the last matching element in
 	 *  this list. Return -1 if no match. */
 	public int lastIndexOf(E e) {
 		// Left as an exercise
-
+		E temp;
+		for (int i = size -1; i > 0; i--) {
+			temp = get(i);
+			if (temp.equals(e))
+				return i;
+		}
+		return -1;
 	}
 
-	@Override /** Replace the element at the specified position 
+	@Override /** Replace the element at the specified position
 	 *  in this list with the specified element. */
 	public E set(int index, E e) {
 		// Left as an exercise
-
+		E temp = remove(index); //remove the old
+		add(index,e); // add the new at the same position... it work, just costly
+		return temp;
 	}
 
 	@Override /** Override iterator() defined in Iterable */
@@ -149,9 +220,9 @@ public class MyLinkedList<E> implements MyList<E> {
 		return new LinkedListIterator();
 	}
 
-	private class LinkedListIterator 
-	implements java.util.Iterator<E> {
-		private Node<E> current = head; // Current node 
+	private class LinkedListIterator
+			implements java.util.Iterator<E> {
+		private Node<E> current = head; // Current node
 		private int index=-1; // initial index before head
 
 		@Override
@@ -162,7 +233,7 @@ public class MyLinkedList<E> implements MyList<E> {
 		@Override
 		public E next() {
 			E e = current.element;
-			index++;	
+			index++;
 			current = current.next;
 			return e;
 		}
@@ -170,7 +241,7 @@ public class MyLinkedList<E> implements MyList<E> {
 		@Override
 		// remove the last element returned by the iterator
 		public void remove() {
-			MyLinkedList.this.remove(index);	
+			MyLinkedList.this.remove(index);
 		}
 	}
 
@@ -180,12 +251,13 @@ public class MyLinkedList<E> implements MyList<E> {
 		Node<E> next;
 
 		public Node(E o){
-			this.element = o;
+			element = o;
 		}
 	}
 
 	@Override /** Return the number of elements in this list */
 	public int size() {
 		// Left as an exercise
+		return size;
 	}
 }

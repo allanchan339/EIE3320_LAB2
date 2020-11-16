@@ -1,3 +1,7 @@
+//CHAN CHEUK YIU
+//17067305D
+//JDK14
+//IntelliJ IDEA
 package LAB;
 //import MyLinkedList.Node;
 

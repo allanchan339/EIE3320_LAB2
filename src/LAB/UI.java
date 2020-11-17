@@ -6,6 +6,8 @@
 package LAB;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -103,12 +105,14 @@ public class UI extends JFrame {
         ActionListener loadTestDataListener = new loadTestDataListener();
         ActionListener editSaveActioner = new EditSaveActioner();
         ActionListener deleteListener = new DeleteListener();
+        ListSelectionListener tableSelectedRowListener = new TableSelectedRowListener();
 
         Add.addActionListener(addListener);
         LoadTestData.addActionListener(loadTestDataListener);
         Edit.addActionListener(editSaveActioner);
         Save.addActionListener(editSaveActioner);
         Delete.addActionListener(deleteListener);
+        bookTable.getSelectionModel().addListSelectionListener(tableSelectedRowListener);
     }
     public static void main(String[] args) {
         UI ui = new UI();
@@ -136,6 +140,7 @@ public class UI extends JFrame {
         }
         bookTable.setModel(model);
     }
+
 
     class AddListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
@@ -212,19 +217,38 @@ public class UI extends JFrame {
         }
     }
 
+    class TableSelectedRowListener implements ListSelectionListener {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting() && bookTable.getSelectedRow() != -1) {
+                //Important if check to avoid update/delete/add trigger this
+                //it helps never jump to dead loop
+                int index = bookTable.getSelectedRow();
+                String ISBNData = (String) bookTable.getValueAt(index, 0);
+                String titleData = (String) bookTable.getValueAt(index, 1);
+                ISBN.setText(ISBNData);
+                Title.setText(titleData);
+            }
+        }
+    }
+
     class DeleteListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            int index = bookTable.getSelectedRow();
-//            Book temp = new Book();
-//            temp.setISBN((String)bookTable.getValueAt(index,0));
-//            temp.setTitle((String)bookTable.getValueAt(index,1));
-//            temp.setAvailable((Boolean)bookTable.getValueAt(index,2));
-//            temp.setReservedQueue(library.get(index).getReservedQueue());
-            library.remove(index);
+            bookTable.clearSelection();
+            refleshTable();
+            String ISBNData = ISBN.getText();
+            for (int i = 0; i < library.size(); i++) {
+                if (ISBNData.equals(library.get(i).getISBN())){
+                    library.remove(i);
+                    ISBN.setText("");
+                    Title.setText("");
+                }
+            }
             refleshTable();
         }
     }
+
     class EditSaveActioner implements ActionListener {
         void buttonSwitched(boolean flag){
             boolean flagN = !flag;
@@ -243,28 +267,21 @@ public class UI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             int index = bookTable.getSelectedRow();
-            if (e.getSource() == Edit){
-            String ISBNData = (String)bookTable.getValueAt(index,0);
-            String titleData = (String)bookTable.getValueAt(index,1);
-//            Boolean available = (Boolean)bookTable.getValueAt(index,2);
 
-            ISBN.setText(ISBNData);
-            Title.setText(titleData);
+            if (e.getSource() == Edit){
             buttonSwitched(true);
             }
             else if (e.getSource() == Save){
                 String ISBNData = ISBN.getText();
                 String titleData = Title.getText();
-//                System.out.println(ISBNData+" "+titleData);
                 boolean corrupt = false;
+
                 for (Book book :
                         library) {
                     if (book.getISBN().equals(ISBNData)) {
-//                        System.out.println(book.getISBN());
-//                        System.out.println(ISBNData+" "+titleData);
-
                         JOptionPane.showMessageDialog(null, "Error: book ISBN exits in the current database");
                         corrupt = true;
+
                     }
                 }
                 if (!corrupt) {

@@ -14,7 +14,7 @@ import java.awt.event.*;
 import java.util.Date;
 
 public class UI extends JFrame {
-//    protected JTextArea jTextArea = new JTextArea().
+    //    protected JTextArea jTextArea = new JTextArea().
 //    jTextArea.setLineWrap(true);
     protected JButton Add = new JButton("Add");
     protected JButton Edit = new JButton("Edit");
@@ -27,14 +27,14 @@ public class UI extends JFrame {
     protected JButton DisplayAllByTitle = new JButton("Display All by Title");
     protected JButton DisplayAllByISBN = new JButton("Display All by ISBN");
     protected JButton Exit = new JButton("Exit");
-    protected JTextField ISBN = new JTextField("",8);
-    protected JTextField Title = new JTextField("",8);
+    protected JTextField ISBN = new JTextField("", 8);
+    protected JTextField Title = new JTextField("", 8);
     protected JTable bookTable = createMiddlePanel();
     protected MyLinkedList<Book> library = new MyLinkedList<>();
-    
-    public JPanel createLowerPanel(){
+
+    public JPanel createLowerPanel() {
         JPanel lowerPanel = new JPanel();
-        lowerPanel.setLayout(new GridLayout(3,1));
+        lowerPanel.setLayout(new GridLayout(3, 1));
 
         JPanel p2 = new JPanel();
         p2.setLayout(new FlowLayout());
@@ -64,35 +64,35 @@ public class UI extends JFrame {
         lowerPanel.add(p2);
         lowerPanel.add(p3);
         lowerPanel.add(p4);
-    return lowerPanel;
+        return lowerPanel;
     }
 
-    public JTextArea createUpperPanel(){
+    public JTextArea createUpperPanel() {
         JTextArea textArea = new JTextArea();
         String User1 = "Student Name and ID: CHAN CHEUK YIU (17067305d)";
         String User2 = "Student Name and ID: LI Haoyang (17083702d)";
         Date date = new Date();
-        textArea.append(User1+"\n"+User2+"\n"+date+"\n\n");
+        textArea.append(User1 + "\n" + User2 + "\n" + date + "\n\n");
         return textArea;
     }
 
-    public JTable createMiddlePanel(){
-        String[] columnNames = { "ISBN", "Title", "Available" };
+    public JTable createMiddlePanel() {
+        String[] columnNames = {"ISBN", "Title", "Available"};
 
         DefaultTableModel model = new DefaultTableModel();
 
-        for (String name: columnNames) {
+        for (String name : columnNames) {
             model.addColumn(name);
         }
         bookTable = new JTable(model);
         return bookTable;
     }
 
-    public UI(){
+    public UI() {
         JPanel lowerPanel = createLowerPanel();
         JTextArea upperPanel = createUpperPanel();
         JScrollPane jScrollPane = new JScrollPane(bookTable);
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         add(upperPanel, BorderLayout.NORTH);
         add(jScrollPane, BorderLayout.CENTER);
         add(lowerPanel, BorderLayout.SOUTH);
@@ -100,12 +100,14 @@ public class UI extends JFrame {
         actionLoader();
     }
 
-    private void actionLoader(){
+    private void actionLoader() {
         ActionListener addListener = new AddListener();
         ActionListener loadTestDataListener = new loadTestDataListener();
         ActionListener editSaveActioner = new EditSaveActioner();
         ActionListener deleteListener = new DeleteListener();
         ListSelectionListener tableSelectedRowListener = new TableSelectedRowListener();
+        ActionListener searchActioner = new SearchListener();
+        ActionListener displayAllListener = new DisplayAllListener();
 
         Add.addActionListener(addListener);
         LoadTestData.addActionListener(loadTestDataListener);
@@ -113,25 +115,27 @@ public class UI extends JFrame {
         Save.addActionListener(editSaveActioner);
         Delete.addActionListener(deleteListener);
         bookTable.getSelectionModel().addListSelectionListener(tableSelectedRowListener);
+        Search.addActionListener(searchActioner);
+        DisplayAll.addActionListener(displayAllListener);
     }
+
     public static void main(String[] args) {
         UI ui = new UI();
         ui.setTitle("Library Admin System");
-        ui.setSize(800,400);
+        ui.setSize(800, 400);
         ui.setLocationRelativeTo(null);
         ui.setDefaultCloseOperation(EXIT_ON_CLOSE);
         ui.setVisible(true);
     }
 
-
-    private void refleshTable(){
-        String[] columnNames = { "ISBN", "Title", "Available" };
+    private void refleshTable() {
+        String[] columnNames = {"ISBN", "Title", "Available"};
         DefaultTableModel model = new DefaultTableModel();
-        for (String name: columnNames) {
+        for (String name : columnNames) {
             model.addColumn(name);
         }
 
-        for (int i = 0; i < library.size(); i++){
+        for (int i = 0; i < library.size(); i++) {
             String ISBN = library.get(i).getISBN();
             String Title = library.get(i).getTitle();
             boolean Available = library.get(i).isAvailable();
@@ -141,32 +145,48 @@ public class UI extends JFrame {
         bookTable.setModel(model);
     }
 
+    private void refleshTable(MyLinkedList<Book> filter_result) {
+        String[] columnNames = {"ISBN", "Title", "Available"};
+        DefaultTableModel model = new DefaultTableModel();
+        for (String name : columnNames) {
+            model.addColumn(name);
+        }
+
+        for (int i = 0; i < filter_result.size(); i++) {
+            String ISBN = filter_result.get(i).getISBN();
+            String Title = filter_result.get(i).getTitle();
+            boolean Available = filter_result.get(i).isAvailable();
+            Object[] x = {ISBN, Title, Available};
+            model.addRow(x);
+        }
+        bookTable.setModel(model);
+    }
 
     class AddListener implements ActionListener {
-    	public void actionPerformed(ActionEvent e) {
-    		if((ISBN.getText().length()!=0)&&(Title.getText().length()!=0)) {
-    			for(int i=0; i<library.size(); i++) {
-    				if(library.get(i).getISBN().equals(ISBN.getText())) {
-    					JOptionPane.showMessageDialog(null,"This ISBN has been occupied by another book in the library!");
-    					return;
-    				}
-    			}
-    			Book newBook = new Book();
-    			newBook.setAvailable(true);
-    			newBook.setISBN(ISBN.getText());
-    			newBook.setTitle(Title.getText());
-    			library.add(newBook);
+        public void actionPerformed(ActionEvent e) {
+            if ((ISBN.getText().length() != 0) && (Title.getText().length() != 0)) {
+                for (int i = 0; i < library.size(); i++) {
+                    if (library.get(i).getISBN().equals(ISBN.getText())) {
+                        JOptionPane.showMessageDialog(null, "This ISBN has been occupied by another book in the library!");
+                        return;
+                    }
+                }
+                Book newBook = new Book();
+                newBook.setAvailable(true);
+                newBook.setISBN(ISBN.getText());
+                newBook.setTitle(Title.getText());
+                library.add(newBook);
 
-    			refleshTable();
-    		} else {
-    			JOptionPane.showMessageDialog(null,"Please fill in both ISBN and Title!");
-    		}
-    	}
+                refleshTable();
+            } else {
+                JOptionPane.showMessageDialog(null, "Please fill in both ISBN and Title!");
+            }
+        }
     }
-    
+
     class loadTestDataListener implements ActionListener {
 
-        boolean checkBook1(){
+        boolean checkBook1() {
             Book book1 = new Book();
             book1.setAvailable(true);
             book1.setISBN("0131450913");
@@ -176,11 +196,12 @@ public class UI extends JFrame {
                 if (book.getISBN().equals(book1.getISBN())) {
                     return true;
                 }
-                }
+            }
             library.add(book1);
             return false;
         }
-        boolean checkBook2(){
+
+        boolean checkBook2() {
             Book book2 = new Book();
             book2.setAvailable(true);
             book2.setISBN("0131857576");
@@ -194,7 +215,8 @@ public class UI extends JFrame {
             library.add(book2);
             return false;
         }
-        boolean checkBook3(){
+
+        boolean checkBook3() {
             Book book3 = new Book();
             book3.setAvailable(true);
             book3.setISBN("0132222205");
@@ -210,7 +232,7 @@ public class UI extends JFrame {
         }
 
         public void actionPerformed(ActionEvent e) {
-    	    if (checkBook1()&checkBook2()&checkBook3()){ // check if 3 book are already here
+            if (checkBook1() & checkBook2() & checkBook3()) { // check if 3 book are already here
                 JOptionPane.showMessageDialog(null, "Error: test data already exist in the current database");
             }
             refleshTable();
@@ -223,6 +245,8 @@ public class UI extends JFrame {
             if (!e.getValueIsAdjusting() && bookTable.getSelectedRow() != -1) {
                 //Important if check to avoid update/delete/add trigger this
                 //it helps never jump to dead loop
+                //!e.getValueIsAdjusting only response to the 2nd fire, eg. pressed and released mouse
+                //getSelectedRow() != -1 only valid the click inside the table
                 int index = bookTable.getSelectedRow();
                 String ISBNData = (String) bookTable.getValueAt(index, 0);
                 String titleData = (String) bookTable.getValueAt(index, 1);
@@ -239,7 +263,7 @@ public class UI extends JFrame {
             refleshTable();
             String ISBNData = ISBN.getText();
             for (int i = 0; i < library.size(); i++) {
-                if (ISBNData.equals(library.get(i).getISBN())){
+                if (ISBNData.equals(library.get(i).getISBN())) {
                     library.remove(i);
                     ISBN.setText("");
                     Title.setText("");
@@ -250,7 +274,7 @@ public class UI extends JFrame {
     }
 
     class EditSaveActioner implements ActionListener {
-        void buttonSwitched(boolean flag){
+        void buttonSwitched(boolean flag) {
             boolean flagN = !flag;
             Add.setEnabled(flagN);
             Edit.setEnabled(flagN);
@@ -264,14 +288,14 @@ public class UI extends JFrame {
             More.setEnabled(flagN);
             Save.setEnabled(flag);
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             int index = bookTable.getSelectedRow();
 
-            if (e.getSource() == Edit){
-            buttonSwitched(true);
-            }
-            else if (e.getSource() == Save){
+            if (e.getSource() == Edit) {
+                buttonSwitched(true);
+            } else if (e.getSource() == Save) {
                 String ISBNData = ISBN.getText();
                 String titleData = Title.getText();
                 boolean corrupt = false;
@@ -290,11 +314,42 @@ public class UI extends JFrame {
                     temp.setTitle(titleData);
                     temp.setAvailable(library.get(index).isAvailable());
                     temp.setReservedQueue(library.get(index).getReservedQueue());
-                    library.set(index,temp);
+                    library.set(index, temp);
                     buttonSwitched(false);
                     refleshTable();
                 }
             }
+        }
+    }
+
+    class SearchListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            MyLinkedList<Book> result = new MyLinkedList<>();
+            String ISBNData = ISBN.getText();
+            String titleData = Title.getText();
+            if (!ISBNData.isEmpty()) {
+                for (int i = 0; i < library.size(); i++) {
+                    if (library.get(i).getISBN().contains(ISBNData)) {
+                        result.add(library.get(i));
+                    }
+                }
+            }
+            if (!titleData.isEmpty()) {
+                for (int i = 0; i < library.size(); i++) {
+                    if (library.get(i).getTitle().contains(titleData)) {
+                        result.add(library.get(i));
+                    }
+                }
+            }
+            refleshTable(result);
+        }
+    }
+
+    class DisplayAllListener implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            refleshTable();
         }
     }
 

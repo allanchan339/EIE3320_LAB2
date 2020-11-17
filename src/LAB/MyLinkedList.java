@@ -6,6 +6,7 @@ package LAB;
 //import MyLinkedList.Node;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 
 public class MyLinkedList<E> implements MyList<E> {
 	protected Node<E> head, tail;
@@ -163,16 +164,10 @@ public class MyLinkedList<E> implements MyList<E> {
 		head = tail = null;
 		size = 0;
 	}
-
 	@Override /** Return true if this list contains the element e */
 	public boolean contains(Object e) {
 		// Left as an exercise
-		for (int i = 0; i < size; i++){
-			E x = get(i);
-			if (x.equals(e))
-				return true;
-		}
-		return false;
+		return indexOf(e) >= 0;
 	}
 
 	@Override /** Return the element at the specified index */

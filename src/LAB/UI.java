@@ -8,6 +8,7 @@ package LAB;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.Date;
 
 public class UI extends JFrame {
@@ -26,7 +27,10 @@ public class UI extends JFrame {
     protected JButton Exit = new JButton("Exit");
     protected JTextField ISBN = new JTextField("",8);
     protected JTextField Title = new JTextField("",8);
+    protected JTable bookTable = createMiddlePanel();
 
+    protected MyLinkedList<Book> library = new MyLinkedList<>();
+    
     public JPanel createLowerPanel(){
         JPanel lowerPanel = new JPanel();
         lowerPanel.setLayout(new GridLayout(3,1));
@@ -66,47 +70,41 @@ public class UI extends JFrame {
 //        upperPanel.setLayout(new FlowLayout());
         JTextArea textArea = new JTextArea();
         String User1 = "Student Name and ID: CHAN CHEUK YIU (17067305d)";
-        String User2 = "Student Name and ID: CHAN CHEUK YIU (17067305d)";
+        String User2 = "Student Name and ID: LI Haoyang (17083702d)";
         Date date = new Date();
         textArea.append(User1+"\n"+User2+"\n"+date+"\n\n");
 //        upperPanel.add(textArea);
         return textArea;
     }
 
-    public JScrollPane createMiddlePanel(){
-//        JPanel middlePanel = new JPanel();
+    public JTable createMiddlePanel(){
         String[] columnNames = { "ISBN", "Title", "Available" };
 
-        TableModel model = new DefaultTableModel();
+        DefaultTableModel model = new DefaultTableModel();
 
-        TableColumnModel columnModel = new DefaultTableColumnModel();
-        TableColumn firstColumn = new TableColumn(1);
-        firstColumn.setHeaderValue(columnNames[0]);
-        columnModel.addColumn(firstColumn);
-
-        TableColumn secondColumn = new TableColumn(0);
-        secondColumn.setHeaderValue(columnNames[1]);
-        columnModel.addColumn(secondColumn);
-
-        TableColumn thirdColumn = new TableColumn(0);
-        thirdColumn.setHeaderValue(columnNames[2]);
-        columnModel.addColumn(thirdColumn);
-
-        JTable jTable = new JTable(model, columnModel);
-
-        JScrollPane jScrollPane = new JScrollPane(jTable);
-//        middlePanel.add(jScrollPane);
-        return jScrollPane;
+        for (String name: columnNames) {
+            model.addColumn(name);
+        }
+        bookTable = new JTable(model);
+        return bookTable;
     }
+
     public UI(){
         JPanel lowerPanel = createLowerPanel();
         JTextArea upperPanel = createUpperPanel();
-        JScrollPane middlePanel = createMiddlePanel();
-
+        JScrollPane jScrollPane = new JScrollPane(bookTable);
         setLayout(new BorderLayout(0,0));
         add(upperPanel, BorderLayout.NORTH);
-        add(middlePanel, BorderLayout.CENTER);
+        add(jScrollPane, BorderLayout.CENTER);
         add(lowerPanel, BorderLayout.SOUTH);
+        
+        ActionListener addListener = new AddListener();
+        ActionListener loadTestDataListener = new loadTestDataListener();
+        ActionListener refleshTable = new RefleshTable();
+        Add.addActionListener(addListener);
+        LoadTestData.addActionListener(loadTestDataListener);
+        Timer timer = new Timer(1,refleshTable);
+        timer.start();
     }
 
     public static void main(String[] args) {
@@ -118,4 +116,66 @@ public class UI extends JFrame {
         ui.setVisible(true);
     }
 
+
+    class AddListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		if((ISBN.getText().length()!=0)&&(Title.getText().length()!=0)) {
+    			for(int i=0; i<library.size(); i++) {
+    				if(library.get(i).getISBN().equals(ISBN.getText())) {
+    					JOptionPane.showMessageDialog(null,"This ISBN has been occupied by another book in the library!");
+    					return;
+    				}
+    			}
+    			Book newBook = new Book();
+    			newBook.setAvailable(true);
+    			newBook.setISBN(ISBN.getText());
+    			newBook.setTitle(Title.getText());
+    			library.add(newBook);
+    		} else {
+    			JOptionPane.showMessageDialog(null,"Please fill in both ISBN and Title!");
+    		}
+    	}
+    }
+    
+    class loadTestDataListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		Book book1 = new Book();
+    		book1.setAvailable(true);
+    		book1.setISBN("0131450913");
+    		book1.setTitle("HTML How to Program");
+    		Book book2 = new Book();
+    		book2.setAvailable(true);
+    		book2.setISBN("0131857576");
+    		book2.setTitle("C++ How to Program");
+    		Book book3 = new Book();
+    		book3.setAvailable(true);
+    		book3.setISBN("0132222205");
+    		book3.setTitle("Java How to Program");
+			library.add(book1);
+			library.add(book2);
+			library.add(book3);
+    	}
+    }
+
+    class RefleshTable implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String[] columnNames = { "ISBN", "Title", "Available" };
+            DefaultTableModel model = new DefaultTableModel();
+            for (String name: columnNames) {
+                model.addColumn(name);
+            }
+
+                for (int i = 0; i < library.size(); i++){
+                    String ISBN = library.get(i).getISBN();
+                    String Title = library.get(i).getTitle();
+                    boolean Available = library.get(i).isAvailable();
+                    Object[] x = {ISBN, Title, Available};
+                    model.addRow(x);
+                }
+                bookTable.setModel(model);
+        }
+    }
 }
+
+

@@ -50,6 +50,7 @@ public class UI extends JFrame {
         p3.add(Delete);
         p3.add(Search);
         p3.add(More);
+        Save.setEnabled(false);
 
         JPanel p4 = new JPanel();
         p4.setLayout(new FlowLayout());
@@ -66,14 +67,11 @@ public class UI extends JFrame {
     }
 
     public JTextArea createUpperPanel(){
-//        JPanel upperPanel = new JPanel();
-//        upperPanel.setLayout(new FlowLayout());
         JTextArea textArea = new JTextArea();
         String User1 = "Student Name and ID: CHAN CHEUK YIU (17067305d)";
         String User2 = "Student Name and ID: LI Haoyang (17083702d)";
         Date date = new Date();
         textArea.append(User1+"\n"+User2+"\n"+date+"\n\n");
-//        upperPanel.add(textArea);
         return textArea;
     }
 
@@ -97,16 +95,19 @@ public class UI extends JFrame {
         add(upperPanel, BorderLayout.NORTH);
         add(jScrollPane, BorderLayout.CENTER);
         add(lowerPanel, BorderLayout.SOUTH);
-        
-        ActionListener addListener = new AddListener();
-        ActionListener loadTestDataListener = new loadTestDataListener();
-        ActionListener refleshTable = new RefleshTable();
-        Add.addActionListener(addListener);
-        LoadTestData.addActionListener(loadTestDataListener);
-        Timer timer = new Timer(1,refleshTable);
-        timer.start();
+
+        actionLoader();
     }
 
+    private void actionLoader(){
+        ActionListener addListener = new AddListener();
+        ActionListener loadTestDataListener = new loadTestDataListener();
+
+        Add.addActionListener(addListener);
+        LoadTestData.addActionListener(loadTestDataListener);
+        Edit.addActionListener(new EditActioner());
+
+    }
     public static void main(String[] args) {
         UI ui = new UI();
         ui.setTitle("Library Admin System");
@@ -118,6 +119,22 @@ public class UI extends JFrame {
 
 
     class AddListener implements ActionListener {
+        private void refleshTable(){
+            String[] columnNames = { "ISBN", "Title", "Available" };
+            DefaultTableModel model = new DefaultTableModel();
+            for (String name: columnNames) {
+                model.addColumn(name);
+            }
+
+            for (int i = 0; i < library.size(); i++){
+                String ISBN = library.get(i).getISBN();
+                String Title = library.get(i).getTitle();
+                boolean Available = library.get(i).isAvailable();
+                Object[] x = {ISBN, Title, Available};
+                model.addRow(x);
+            }
+            bookTable.setModel(model);
+        }
     	public void actionPerformed(ActionEvent e) {
     		if((ISBN.getText().length()!=0)&&(Title.getText().length()!=0)) {
     			for(int i=0; i<library.size(); i++) {
@@ -131,6 +148,8 @@ public class UI extends JFrame {
     			newBook.setISBN(ISBN.getText());
     			newBook.setTitle(Title.getText());
     			library.add(newBook);
+
+    			refleshTable();
     		} else {
     			JOptionPane.showMessageDialog(null,"Please fill in both ISBN and Title!");
     		}
@@ -138,6 +157,22 @@ public class UI extends JFrame {
     }
     
     class loadTestDataListener implements ActionListener {
+        private void refleshTable(){
+            String[] columnNames = { "ISBN", "Title", "Available" };
+            DefaultTableModel model = new DefaultTableModel();
+            for (String name: columnNames) {
+                model.addColumn(name);
+            }
+
+            for (int i = 0; i < library.size(); i++){
+                String ISBN = library.get(i).getISBN();
+                String Title = library.get(i).getTitle();
+                boolean Available = library.get(i).isAvailable();
+                Object[] x = {ISBN, Title, Available};
+                model.addRow(x);
+            }
+            bookTable.setModel(model);
+        }
     	public void actionPerformed(ActionEvent e) {
     		Book book1 = new Book();
     		book1.setAvailable(true);
@@ -154,28 +189,37 @@ public class UI extends JFrame {
 			library.add(book1);
 			library.add(book2);
 			library.add(book3);
+
+			refleshTable();
     	}
     }
 
-    class RefleshTable implements ActionListener {
+    class EditActioner implements ActionListener {
+        void buttonSwitched(boolean flag){
+            boolean flagN = !flag;
+            Add.setEnabled(flagN);
+            Edit.setEnabled(flagN);
+            Delete.setEnabled(flagN);
+            Search.setEnabled(flagN);
+            LoadTestData.setEnabled(flagN);
+            DisplayAll.setEnabled(flagN);
+            DisplayAllByISBN.setEnabled(flagN);
+            DisplayAllByTitle.setEnabled(flagN);
+            Exit.setEnabled(flagN);
+            More.setEnabled(flagN);
+            Save.setEnabled(flag);
+        }
         @Override
         public void actionPerformed(ActionEvent e) {
-            String[] columnNames = { "ISBN", "Title", "Available" };
-            DefaultTableModel model = new DefaultTableModel();
-            for (String name: columnNames) {
-                model.addColumn(name);
-            }
+            int index = bookTable.getSelectedRow();
+            String ISBNData = (String)bookTable.getValueAt(index,0);
+            String titleData = (String)bookTable.getValueAt(index,1);
+//            Boolean available = (Boolean)bookTable.getValueAt(index,2);
 
-                for (int i = 0; i < library.size(); i++){
-                    String ISBN = library.get(i).getISBN();
-                    String Title = library.get(i).getTitle();
-                    boolean Available = library.get(i).isAvailable();
-                    Object[] x = {ISBN, Title, Available};
-                    model.addRow(x);
-                }
-                bookTable.setModel(model);
+            ISBN.setText(ISBNData);
+            Title.setText(titleData);
+            buttonSwitched(true);
         }
     }
+
 }
-
-

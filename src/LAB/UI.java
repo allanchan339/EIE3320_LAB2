@@ -1,5 +1,7 @@
 //CHAN CHEUK YIU
 //17067305D
+//LI Haoyang
+//17083702D
 //JDK14
 //IntelliJ IDEA
 
@@ -108,6 +110,9 @@ public class UI extends JFrame {
         ListSelectionListener tableSelectedRowListener = new TableSelectedRowListener();
         ActionListener searchActioner = new SearchListener();
         ActionListener displayAllListener = new DisplayAllListener();
+        ActionListener displayAllByISBNListener = new DisplayAllByISBNListener();
+        ActionListener displayAllByTitleListener = new DisplayAllByTitleListener();
+        ActionListener moreListener = new MoreListener();
 
         Add.addActionListener(addListener);
         LoadTestData.addActionListener(loadTestDataListener);
@@ -117,6 +122,9 @@ public class UI extends JFrame {
         bookTable.getSelectionModel().addListSelectionListener(tableSelectedRowListener);
         Search.addActionListener(searchActioner);
         DisplayAll.addActionListener(displayAllListener);
+        DisplayAllByISBN.addActionListener(displayAllByISBNListener);
+        DisplayAllByTitle.addActionListener(displayAllByTitleListener);
+        More.addActionListener(moreListener);
     }
 
     public static void main(String[] args) {
@@ -352,6 +360,108 @@ public class UI extends JFrame {
             refleshTable();
         }
     }
+    
+    class DisplayAllByISBNListener implements ActionListener {
+    	private boolean asc = true;
+    	@Override
+    	public void actionPerformed(ActionEvent e) {
+    		MyLinkedList<Book> result = new MyLinkedList<>();
+    		if(asc) {
+    			asc = false;
+    			int lastISBN = 0, index = 0;
+    			while(result.size()<library.size()) {
+    				int minISBN = 999999999;
+        			for(int i=0; i<library.size(); i++) {
+        				int currentISBN = Integer.valueOf(library.get(i).getISBN());
+        				if(currentISBN>lastISBN && currentISBN<minISBN) {
+        					minISBN = currentISBN;
+        					index = i;
+        				}
+        			}
+        			lastISBN = minISBN;
+        			result.add(library.get(index));
+        		}
+    		} else {
+    			asc = true;
+    			int lastISBN = 999999999, index = 0;
+    			while(result.size()<library.size()) {
+    				int maxISBN = 0;
+        			for(int i=0; i<library.size(); i++) {
+        				int currentISBN = Integer.valueOf(library.get(i).getISBN());
+        				if(currentISBN<lastISBN && currentISBN>maxISBN) {
+        					maxISBN = currentISBN;
+        					index = i;
+        				}
+        			}
+        			lastISBN = maxISBN;
+        			result.add(library.get(index));
+        		}
+    		}
+    		refleshTable(result);
+    	}
+    }
+    
+    class DisplayAllByTitleListener implements ActionListener {
+    	private boolean asc = true;
+    	@Override
+    	public void actionPerformed(ActionEvent e) {
+    		MyLinkedList<Book> result = new MyLinkedList<>();
+    		if(asc) {
+    			asc = false;
+    			String lastTitle = " ";
+    			int index = 0;
+    			while(result.size()<library.size()) {
+    				String minTitle = "~~~~~~~~~~";
+        			for(int i=0; i<library.size(); i++) {
+        				String currentTitle = library.get(i).getTitle();
+        				if(currentTitle.compareTo(lastTitle)>0 && currentTitle.compareTo(minTitle)<0) {
+        					minTitle = currentTitle;
+        					index = i;
+        				}
+        			}
+        			lastTitle = minTitle;
+        			result.add(library.get(index));
+        		}
+    		} else {
+    			asc = true;
+    			String lastTitle = "~~~~~~~~~~";
+    			int index = 0;
+    			while(result.size()<library.size()) {
+    				String maxTitle = " ";
+        			for(int i=0; i<library.size(); i++) {
+        				String currentTitle = library.get(i).getTitle();
+        				if(currentTitle.compareTo(lastTitle)<0 && currentTitle.compareTo(maxTitle)>0) {
+        					maxTitle = currentTitle;
+        					index = i;
+        				}
+        			}
+        			lastTitle = maxTitle;
+        			result.add(library.get(index));
+        		}
+    		}
+    		refleshTable(result);
+    	}
+    	
+    }
 
-
+    class MoreListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		if(ISBN.getText().length()>0) {
+    			for (int i = 0; i < library.size(); i++) {
+                    if (library.get(i).getISBN().equals(ISBN.getText())) {
+                    	More more = new More(library.get(i).getISBN(), library.get(i).getTitle(), library.get(i).isAvailable(), library);
+                		more.setTitle(library.get(i).getTitle());
+                        more.setSize(600, 500);
+                        more.setLocationRelativeTo(null);
+                        more.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                        more.setVisible(true);
+                        return;
+                    }
+                }
+    			JOptionPane.showMessageDialog(null, "No matched ISBN!");
+    		} else {
+    			JOptionPane.showMessageDialog(null, "Please fill in ISBN!");
+    		}
+    	}
+    }
 }

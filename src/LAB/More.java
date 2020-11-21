@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 
 public class More extends JFrame {
 	protected JButton borrow = new JButton("Borrow");
@@ -25,6 +26,7 @@ public class More extends JFrame {
 	boolean available;
 	protected JButton addImage = new JButton("Add Book Image (PNG only)");
 	protected ImageIcon imageIcon = new ImageIcon();
+	protected JLabel imageShow = new JLabel();
 	public JTextArea createUpperPanel() {
 		JTextArea textArea = new JTextArea();
 		textArea.append("ISBN: " + ISBN + "\nTitle: " + title + "\nAvailable: " + available + "\n");
@@ -76,7 +78,10 @@ public class More extends JFrame {
 		add(upperPanel, BorderLayout.NORTH);
 		add(middlePanel, BorderLayout.CENTER);
 		add(notification, BorderLayout.SOUTH);
-		add(new JLabel(imageIcon), BorderLayout.EAST);
+		setImageIcon();
+//		JLabel imageShow = new JLabel();
+//		imageShow.setIcon(imageIcon);
+		add(imageShow, BorderLayout.WEST);
 		actionLoader();
 	}
 
@@ -170,36 +175,77 @@ public class More extends JFrame {
 		}
 	}
 
+	void setImageIcon(){
+		for (int i = 0; i < library.size(); i++) {
+			if (library.get(i).getISBN().equals(ISBN)) {
+				BufferedImage image = library.get(i).getImage();
+				if (image == null) {
+					try{
+						image = ImageIO.read(new File("./resource/default.png"));
+					}catch (IOException e){
+						e.getMessage();
+					}
+				}
+				imageIcon.setImage(image);
+				imageShow.setIcon(imageIcon);
+			}
+		}
+	}
+	void setImageIcon(BufferedImage image){
+		for (int i = 0; i < library.size(); i++) {
+			if (library.get(i).getISBN().equals(ISBN)) {
+				library.get(i).setImage(image);
+				setImageIcon();
+			}
+		}
+	}
+
 	class AddImageListener implements ActionListener {
 
 		String fileSelector() {
 			String location = null;
 			JFileChooser fileChooser = new JFileChooser(new File(System.getProperty("user.dir")));
+			fileChooser.setAcceptAllFileFilterUsed(false);
+			fileChooser.addChoosableFileFilter(new FileFilter() {
+				@Override
+				public boolean accept(File f) {
+					if (f.isDirectory()) {
+						return true;
+					}
+					else {
+						String filename = f.getName().toLowerCase();
+						return filename.endsWith(".png");
+					}
+				}
+
+				@Override
+				public String getDescription() {
+					return "PNG Images (*.png)";
+				}
+			});
 			int r = fileChooser.showOpenDialog(null);
 			if (r == JFileChooser.APPROVE_OPTION) {
 				location = fileChooser.getSelectedFile().getAbsolutePath();
+//				System.out.println(location);
+			} else {
+				System.out.println("Selector closed");
 			}
 			return location;
 		}
-
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String path = fileSelector();
 			File file = new File(path);
 				BufferedImage image = null;
-
 				try {
 					image = ImageIO.read(file);
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
+					System.out.println("Failed to read image");
 				}
+				setImageIcon(image);
+				JOptionPane.showMessageDialog(null, "Please reload the More>> page to refresh the new image");
 
-				for (int i = 0; i < library.size(); i++) {
-					if (library.get(i).getISBN().equals(ISBN)) {
-						library.get(i).setImage(image);
-						imageIcon.setImage(image);
-				}
-			}
 		}
 	}
 }

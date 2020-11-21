@@ -16,11 +16,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Date;
+import java.util.Queue;
 
 public class UI extends JFrame {
     //    protected JTextArea jTextArea = new JTextArea().
@@ -110,8 +108,54 @@ public class UI extends JFrame {
         textArea.append(User1 + "\n" + User2 + "\n" + date + "\n\n");
         return textArea;
     }
+    public MyQueue<String> parseQueueFromString(String queue){
+        MyQueue<String> temp = new MyQueue<>();
+        String[] strings = queue.split(",");
+        for (String string : strings) {
+            temp.enqueue(string);
+        }
+        return temp;
+    }
+
+    public BufferedImage parseImageFromBytes(byte[] image){
+        InputStream is = new ByteArrayInputStream(image);
+        try {
+            return ImageIO.read(is);
+        } catch (IOException e){
+            e.getMessage();
+        }
+        return null;
+    }
+    public void extractAndReconstructLibrary(){
+
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Books");
+            while (rs.next()){
+                String title = rs.getString("title");
+                String ISBN = rs.getString("ISBN");
+                boolean available = rs.getBoolean("available");
+                String queue = rs.getString("queue");
+                MyQueue<String> myQueue = parseQueueFromString(queue);
+                byte[] image = rs.getBytes("image");
+                BufferedImage bufferedImage = parseImageFromBytes(image);
+                Book book = new Book();
+                book.setTitle(title);
+                book.setISBN(ISBN);
+                book.setAvailable(available);
+                book.setReservedQueue(myQueue);
+                book.setImage(bufferedImage);
+                library.add(book);
+            }
+        }
+        catch (SQLException e){
+            e.getMessage();
+        }
+
+    }
 
     public JTable createMiddlePanel() {
+
         String[] columnNames = {"ISBN", "Title", "Available"};
 
         DefaultTableModel model = new DefaultTableModel();
@@ -120,7 +164,6 @@ public class UI extends JFrame {
             model.addColumn(name);
         }
         bookTable = new JTable(model);
-        //starting point to load SQL data
         return bookTable;
     }
 
@@ -134,6 +177,9 @@ public class UI extends JFrame {
         add(lowerPanel, BorderLayout.SOUTH);
 
         actionLoader();
+
+        extractAndReconstructLibrary();
+        refleshTable();
     }
 
     private void actionLoader() {

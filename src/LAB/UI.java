@@ -16,9 +16,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.*;
 import java.util.Date;
-import java.util.Queue;
 
 public class UI extends JFrame {
     //    protected JTextArea jTextArea = new JTextArea().
@@ -39,7 +40,18 @@ public class UI extends JFrame {
     protected JTable bookTable = createMiddlePanel();
     protected MyLinkedList<Book> library = new MyLinkedList<>();
     protected Connection conn = connect();
+    protected BufferedImage defaultImage = getDefaultImage();
 
+    protected static BufferedImage getDefaultImage(){
+        BufferedImage c = null;
+        try {
+            URL url = new URL("https://cdn.iconscout.com/icon/free/png-256/404-page-not-found-456876.png");
+            c = ImageIO.read(url);
+        } catch (IOException e){
+            e.getMessage();
+        }
+        return c;
+    }
     public static Connection connect(){
         Connection conn = null;
         try {
@@ -110,9 +122,12 @@ public class UI extends JFrame {
     }
     public MyQueue<String> parseQueueFromString(String queue){
         MyQueue<String> temp = new MyQueue<>();
-        String[] strings = queue.split(",");
+        String[] strings = new String[0];
+        if (!queue.isBlank()) {
+            strings = queue.split(",");
+        }
         for (String string : strings) {
-            temp.enqueue(string);
+            temp.enqueue(string.trim());
         }
         return temp;
     }
@@ -266,7 +281,8 @@ public class UI extends JFrame {
                 newBook.setISBN(ISBN.getText());
                 newBook.setTitle(Title.getText());
                 library.add(newBook);
-
+                ISBN.setText("");
+                Title.setText("");
                 refleshTable();
             } else {
                 JOptionPane.showMessageDialog(null, "Please fill in both ISBN and Title!");
@@ -286,7 +302,7 @@ public class UI extends JFrame {
                 image = ImageIO.read(new File("./resource/html.png"));}
             catch (IOException e){
                 e.getMessage();
-                image = null;
+                image = defaultImage;
             }
             book1.setImage(image);
             for (Book book :
@@ -309,7 +325,7 @@ public class UI extends JFrame {
             image = ImageIO.read(new File("./resource/C.png"));}
             catch (IOException e){
                 e.getMessage();
-                image = null;
+                image = defaultImage;
             }
             book2.setImage(image);
 
@@ -333,7 +349,7 @@ public class UI extends JFrame {
                 image = ImageIO.read(new File("./resource/java.png"));}
             catch (IOException e){
                 e.getMessage();
-                image = null;
+                image = defaultImage;
             }
             book3.setImage(image);
 
@@ -348,9 +364,18 @@ public class UI extends JFrame {
         }
 
         public void actionPerformed(ActionEvent e) {
-            if (checkBook1() & checkBook2() & checkBook3()) { // check if 3 book are already here
-                JOptionPane.showMessageDialog(null, "Error: test data already exist in the current database");
+            ISBN.setText("");
+            Title.setText("");
+            if (checkBook1()) { // check if book is already here
+                JOptionPane.showMessageDialog(null, "Error: HTML How to Program already exist in the current database");
             }
+            if (checkBook2()) {
+                JOptionPane.showMessageDialog(null, "Error: C++ How to Program already exist in the current database");
+            }
+            if (checkBook3()) {
+                JOptionPane.showMessageDialog(null, "Error: Java How to Program already exist in the current database");
+            }
+
             refleshTable();
         }
     }
@@ -375,14 +400,23 @@ public class UI extends JFrame {
     class DeleteListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            boolean foundFlag = false;
             bookTable.clearSelection();
             refleshTable();
             String ISBNData = ISBN.getText();
-            for (int i = 0; i < library.size(); i++) {
-                if (ISBNData.equals(library.get(i).getISBN())) {
-                    library.remove(i);
-                    ISBN.setText("");
-                    Title.setText("");
+            if (ISBNData.isBlank()) { JOptionPane.showMessageDialog(null, "Error: ISBN column is empty");
+            }
+            else {
+                for (int i = 0; i < library.size(); i++) {
+                    if (ISBNData.equals(library.get(i).getISBN())) {
+                        foundFlag = true;
+                        library.remove(i);
+                        ISBN.setText("");
+                        Title.setText("");
+                    }
+                }
+                if (!foundFlag){
+                    JOptionPane.showMessageDialog(null, "Error: ISBN column is incorrect");
                 }
             }
             refleshTable();
@@ -390,6 +424,7 @@ public class UI extends JFrame {
     }
 
     class EditSaveActioner implements ActionListener {
+        int index = -1;
         void buttonSwitched(boolean flag) {
             boolean flagN = !flag;
             Add.setEnabled(flagN);
@@ -407,32 +442,56 @@ public class UI extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            int index = bookTable.getSelectedRow();
+            String ISBNData = ISBN.getText();
+            boolean foundFlag = false;
 
-            if (e.getSource() == Edit) {
-                buttonSwitched(true);
-            } else if (e.getSource() == Save) {
-                String ISBNData = ISBN.getText();
-                String titleData = Title.getText();
-                boolean corrupt = false;
+            if (ISBNData.isBlank()) { JOptionPane.showMessageDialog(null, "Error: ISBN column is empty");
+            } else {
+                if (e.getSource() == Edit) {
+                    for (int i = 0; i < library.size(); i++) {
+                        if (library.get(i).getISBN().equals(ISBNData)){
+                            Title.setText(library.get(i).getTitle());
+                            index = i;
+                        }
+                    }
+                    //well, the system is so buggy, let use a simple fix
+                    for (int i = 0; i < library.size(); i++) {
+                        if (library.get(i).getISBN().equals(ISBNData)){
+                            foundFlag = true;
+                        }
+                    }
+                    if (foundFlag) {
+                        buttonSwitched(true);
 
-                for (Book book :
-                        library) {
-                    if (book.getISBN().equals(ISBNData)) {
-                        JOptionPane.showMessageDialog(null, "Error: book ISBN exits in the current database");
-                        corrupt = true;
-
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Error: ISBN column is incorrect");
                     }
                 }
+                //Save event
+                if (e.getSource() == Save) {
+                String ISBNSave = ISBN.getText();
+                String titleSave = Title.getText();
+                boolean corrupt = false;
+                for (int i = 0; i < library.size(); i++) {
+                    Book book = library.get(i);
+                    if (book.getISBN().equals(ISBNSave) && i != index) { //if using SAME ISBN but different book
+                        JOptionPane.showMessageDialog(null, "Error: book ISBN exits in the current database");
+                        corrupt = true;
+                    }
+                }
+                //if nothing wrong in checking
                 if (!corrupt) {
                     Book temp = new Book();
-                    temp.setISBN(ISBNData);
-                    temp.setTitle(titleData);
+                    temp.setISBN(ISBNSave);
+                    temp.setTitle(titleSave);
                     temp.setAvailable(library.get(index).isAvailable());
                     temp.setReservedQueue(library.get(index).getReservedQueue());
                     library.set(index, temp);
                     buttonSwitched(false);
                     refleshTable();
+                    ISBN.setText("");
+                    Title.setText("");
+                    }
                 }
             }
         }

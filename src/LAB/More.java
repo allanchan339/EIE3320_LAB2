@@ -54,25 +54,13 @@ public class More extends JFrame {
 		return middlePanel;
 	}
 
-//	public void switchImage(){
-////		JPanel ImageLayer = new JPanel();
-//		BufferedImage image = null;
-//		for (int i = 0; i < library.size(); i++) {
-//			if (library.get(i).getISBN().equals(ISBN)) {
-//				image = library.get(i).getImage();
-//			}
-//			}
-//
-//		imageIcon.setImage(image);
-////		ImageLayer.add(imageIcon);
-//	}
-
 	public More(String ISBN, String title, boolean available, MyLinkedList<Book> library) {
 		this.ISBN = ISBN;
 		this.title = title;
 		this.available = available;
 		this.library = library;
 		upperPanel = createUpperPanel();
+		imageShow.setSize(150,150);
 		JPanel middlePanel = createMiddlePanel();
 		setLayout(new BorderLayout(0, 0));
 		add(upperPanel, BorderLayout.NORTH);
@@ -122,7 +110,7 @@ public class More extends JFrame {
 			String name = JOptionPane.showInputDialog("What's your name?");
 			for (int i = 0; i < library.size(); i++) {
 				if (library.get(i).getISBN().equals(ISBN)) {
-					if (name != null) {
+					if (!name.isBlank() && name != null) {
 						library.get(i).getReservedQueue().enqueue(name);
 						notification.setText("The book is reserved by " + name + ".");
 						break;
@@ -180,11 +168,13 @@ public class More extends JFrame {
 			if (library.get(i).getISBN().equals(ISBN)) {
 				BufferedImage image = library.get(i).getImage();
 				if (image == null) {
-					try{
-						image = ImageIO.read(new File("./resource/default.png"));
-					}catch (IOException e){
-						e.getMessage();
-					}
+//					try{
+						image = UI.getDefaultImage();
+//						image = ImageIO.read(new File("./resource/default.png"));
+//					}catch (IOException e){
+//						e.getMessage();
+//						image = UI.getDefaultImage();
+//					}
 				}
 				imageIcon.setImage(image);
 				imageShow.setIcon(imageIcon);

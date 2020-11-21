@@ -4,12 +4,24 @@
 //IntelliJ IDEA
 package LAB;
 
+import java.awt.image.BufferedImage;
+
 public class Book {
     private String title; // store the title of the book
     private String ISBN; // store the ISBN of the book
     private boolean available; // keep the status of whether the book is available;
     // initially should be true
     private MyQueue<String> reservedQueue = new MyQueue<>(); // store the queue of waiting list
+    private BufferedImage image;
+
+    public BufferedImage getImage() {
+        return image;
+    }
+
+    public void setImage(BufferedImage image) {
+        this.image = image;
+    }
+
 
     public String getTitle() {
         return title;

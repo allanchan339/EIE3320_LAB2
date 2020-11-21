@@ -7,12 +7,19 @@
 
 package LAB;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Date;
 
 public class UI extends JFrame {
@@ -33,6 +40,32 @@ public class UI extends JFrame {
     protected JTextField Title = new JTextField("", 8);
     protected JTable bookTable = createMiddlePanel();
     protected MyLinkedList<Book> library = new MyLinkedList<>();
+    protected Connection conn = connect();
+
+    public static Connection connect(){
+        Connection conn = null;
+        try {
+
+            String url = "jdbc:sqlite:test.sqlite";
+            conn = DriverManager.getConnection(url);
+            System.out.println("Connection to sqlite succeed");
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            System.out.println("If error code appeared, please insert sqlite-jbdc-<version>.jar to library // CLASSPATH");
+        }
+        return conn;
+    }
+
+    public static void clossSession(Connection conn){
+        try {
+            if (conn != null){
+                conn.close();
+                System.out.println("Connection to sqlite is closed");
+            }
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+        }
+    }
 
     public JPanel createLowerPanel() {
         JPanel lowerPanel = new JPanel();
@@ -87,6 +120,7 @@ public class UI extends JFrame {
             model.addColumn(name);
         }
         bookTable = new JTable(model);
+        //starting point to load SQL data
         return bookTable;
     }
 
@@ -113,6 +147,7 @@ public class UI extends JFrame {
         ActionListener displayAllByISBNListener = new DisplayAllByISBNListener();
         ActionListener displayAllByTitleListener = new DisplayAllByTitleListener();
         ActionListener moreListener = new MoreListener();
+        ActionListener exitListener = new ExitListener();
 
         Add.addActionListener(addListener);
         LoadTestData.addActionListener(loadTestDataListener);
@@ -125,6 +160,7 @@ public class UI extends JFrame {
         DisplayAllByISBN.addActionListener(displayAllByISBNListener);
         DisplayAllByTitle.addActionListener(displayAllByTitleListener);
         More.addActionListener(moreListener);
+        Exit.addActionListener(exitListener);
     }
 
     public static void main(String[] args) {
@@ -194,11 +230,19 @@ public class UI extends JFrame {
 
     class loadTestDataListener implements ActionListener {
 
-        boolean checkBook1() {
+        boolean checkBook1(){
             Book book1 = new Book();
             book1.setAvailable(true);
             book1.setISBN("0131450913");
             book1.setTitle("HTML How to Program");
+            BufferedImage image;
+            try{
+                image = ImageIO.read(new File("./resource/html.png"));}
+            catch (IOException e){
+                e.getMessage();
+                image = null;
+            }
+            book1.setImage(image);
             for (Book book :
                     library) {
                 if (book.getISBN().equals(book1.getISBN())) {
@@ -209,11 +253,20 @@ public class UI extends JFrame {
             return false;
         }
 
-        boolean checkBook2() {
+        boolean checkBook2(){
             Book book2 = new Book();
             book2.setAvailable(true);
             book2.setISBN("0131857576");
             book2.setTitle("C++ How to Program");
+            BufferedImage image;
+            try{
+            image = ImageIO.read(new File("./resource/C.png"));}
+            catch (IOException e){
+                e.getMessage();
+                image = null;
+            }
+            book2.setImage(image);
+
             for (Book book :
                     library) {
                 if (book.getISBN().equals(book2.getISBN())) {
@@ -224,11 +277,20 @@ public class UI extends JFrame {
             return false;
         }
 
-        boolean checkBook3() {
+        boolean checkBook3(){
             Book book3 = new Book();
             book3.setAvailable(true);
             book3.setISBN("0132222205");
             book3.setTitle("Java How to Program");
+            BufferedImage image;
+            try{
+                image = ImageIO.read(new File("./resource/java.png"));}
+            catch (IOException e){
+                e.getMessage();
+                image = null;
+            }
+            book3.setImage(image);
+
             for (Book book :
                     library) {
                 if (book.getISBN().equals(book3.getISBN())) {
@@ -463,5 +525,40 @@ public class UI extends JFrame {
     			JOptionPane.showMessageDialog(null, "Please fill in ISBN!");
     		}
     	}
+    }
+    class ExitListener implements ActionListener{
+
+        public void libraryParseandStoreToSQL() throws SQLException, IOException {
+            PreparedStatement reset = conn.prepareStatement("DELETE FROM Books;");
+            reset.executeUpdate();
+            for (int i = 0; i < library.size(); i++) {
+                PreparedStatement store = conn.prepareStatement("INSERT INTO Books VALUES (?,?,?,?,?)");
+                store.setString(1,library.get(i).getTitle());
+                store.setString(2,library.get(i).getISBN());
+                store.setBoolean(3,library.get(i).isAvailable());
+                String queue = library.get(i).getReservedQueue().toString();
+                queue = queue.replace("Queue: [","");
+                queue = queue.replace("]","");
+                queue = queue.trim();
+                store.setString(4,queue);
+                BufferedImage image = library.get(i).getImage();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                if (image != null){
+                    ImageIO.write(image,"png",baos);
+                }
+                store.setBytes(5,baos.toByteArray());
+                store.executeUpdate();
+            }
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                libraryParseandStoreToSQL();
+            } catch (SQLException | IOException throwables) {
+                throwables.printStackTrace();
+            }
+            clossSession(conn);
+            System.exit(0);
+        }
     }
 }
